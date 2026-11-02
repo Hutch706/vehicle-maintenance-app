@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vehicle Maintenance App</title>
+<meta name="description" content="Log fill-ups, track MPG and maintenance. Your data stays on your device.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f151b" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Maintenance">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="app.css">
+<script src="data.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+
+<div class="fatal" id="fatal" hidden></div>
+
+<main class="wrap">
+
+  <!-- ================= LOG ================= -->
+  <section class="screen" id="screen-log" aria-labelledby="logTitle">
+    <header>
+      <h1 id="logTitle">Vehicle Maintenance App</h1>
+      <p class="sub">Log each fill-up to track MPG and maintenance. Everything is saved on this device.</p>
+    </header>
+
+    <div class="nudge" id="iosNudge" hidden>
+      <p><strong>Add this app to your Home Screen.</strong> Safari can clear data for websites you don't open often. Apps on the Home Screen keep theirs.</p>
+      <div class="nudge-acts"><a class="mbtn" href="#backup" data-open="install-ios">Show me how</a><button class="mbtn quiet" type="button" id="iosNudgeLater">Not now</button></div>
+    </div>
+
+    <div class="nudge" id="backupNudge" hidden>
+      <p id="backupNudgeText"></p>
+      <div class="nudge-acts"><button class="mbtn" type="button" id="nudgeExport">Export backup</button><button class="mbtn quiet" type="button" id="nudgeLater">Remind me later</button></div>
+    </div>
+
+    <button class="mbanner" id="mBanner" type="button" hidden aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>
+      <strong>Maintenance coming up</strong>
+      <span class="chev">Details ›</span>
+      <span class="mb-sub" id="mBannerSub"></span>
+    </button>
+
+    <div class="card empty-card" id="noVehicles" hidden>
+      <h2 class="h2-plain">Add a vehicle to get started</h2>
+      <p>Fill-ups and maintenance are tracked per vehicle.</p>
+      <a class="save" href="#vehicles">Add a vehicle</a>
+    </div>
+
+    <div id="logMain" class="stack">
+      <div class="bigbtns">
+        <button class="bigbtn" id="addFillBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16"/><path d="M3 21h13"/><path d="M7 7h5v3.5H7z"/><path d="M15 10h1.5a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 0 3 0V9l-3-3.5"/></svg>
+          <span>Add fill-up</span>
+        </button>
+        <button class="bigbtn" id="addMaintBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>
+          <span>Log maintenance</span>
+        </button>
+      </div>
+
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+
+      <div id="entry" class="entry" hidden>
+        <div class="tabs" role="tablist" aria-label="What to log">
+          <button class="tab" role="tab" id="tabFill" aria-selected="true" aria-controls="panelFill" type="button">Fill-up</button>
+          <button class="tab" role="tab" id="tabMaint" aria-selected="false" aria-controls="panelMaint" type="button">Maintenance</button>
+        </div>
+
+        <div id="panelFill" role="tabpanel" aria-labelledby="tabFill">
+          <form class="card" id="form" novalidate>
+            <label for="eVehicle">Vehicle<select id="eVehicle"></select></label>
+            <div class="display" aria-label="Pump readout">
+              <span>Price</span><span id="dPrice">—</span>
+              <span>Gallons</span><span id="dGal">—</span>
+              <span>Sale</span><span id="dCost">—</span>
+            </div>
+            <div class="grid2">
+              <label for="date">Date<input id="date" type="date" required></label>
+              <label for="station">Gas station<input id="station" type="text" list="stationList" autocomplete="off" placeholder="Optional"></label>
+            </div>
+            <datalist id="stationList"></datalist>
+            <label for="odometer">Odometer<input id="odometer" type="number" inputmode="numeric" min="0" step="1" required></label>
+            <div class="grid2">
+              <label for="ppg">$/gallon<input id="ppg" type="number" inputmode="decimal" min="0" step="0.001" required></label>
+              <label for="gallons">Gallons<input id="gallons" type="number" inputmode="decimal" min="0" step="0.001" required></label>
+            </div>
+            <label for="rtotal">Receipt total<input id="rtotal" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Optional, to double-check"></label>
+            <div class="check" id="check"></div>
+            <div class="status" id="fStatus" role="status"></div>
+            <button class="save" id="saveBtn" type="submit">Save fill-up</button>
+            <button class="link" id="cancelBtn" type="button">Discard</button>
+          </form>
+        </div>
+
+        <div id="panelMaint" role="tabpanel" aria-labelledby="tabMaint" inert>
+          <form class="card" id="mForm" novalidate>
+            <label for="mVehicle">Vehicle<select id="mVehicle"></select></label>
+            <div class="grid2">
+              <label for="mDate">Date<input id="mDate" type="date" required></label>
+              <label for="mOdo">Odometer<input id="mOdo" type="number" inputmode="numeric" min="0" step="1" required></label>
+            </div>
+            <label for="mShop">Shop<select id="mShop"></select></label>
+            <div class="msel-wrap">
+              <span class="msel-lab">Maintenance items</span>
+              <details class="msel" id="mItems"><summary id="mItemsSum">Select items</summary><div class="msel-list" id="mItemsList"></div></details>
+            </div>
+            <label for="mOther">Other repairs<textarea id="mOther" rows="3" placeholder="e.g. Replaced front brake pads"></textarea></label>
+            <div class="status" id="mStatus" role="status"></div>
+            <button class="save" id="mSave" type="submit">Save maintenance</button>
+            <button class="link" id="mCancel" type="button">Discard</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="histbar">
+        <select id="vehicle" aria-label="Vehicle to show history for"></select>
+        <label class="chk" for="showInactive" id="showInactiveWrap"><input type="checkbox" id="showInactive"> Show inactive vehicles</label>
+      </div>
+
+      <section class="card mpg" aria-labelledby="mpgTitle">
+        <h2 id="mpgTitle">MPG</h2>
+        <div class="alert" id="mpgWarn" hidden></div>
+        <div class="stats">
+          <div class="stat main"><span class="k">Lifetime</span><span class="v" id="sLife">—</span><span class="u" id="sLifeU"></span></div>
+          <div class="stat"><span class="k">Last 2 mo</span><span class="v" id="s2mo">—</span></div>
+          <div class="stat"><span class="k">Last fill-up</span><span class="v" id="sLast">—</span></div>
+        </div>
+        <div class="chart" id="chart"></div>
+        <div class="legend" id="legend" hidden><span><i></i>Fill-up MPG</span><span><i class="run"></i>2-month running MPG</span></div>
+        <p class="foot" id="mpgNote"></p>
+      </section>
+
+      <section class="sec" id="maintSec" hidden>
+        <div class="sechead"><h2 id="maintTitle">Maintenance</h2><button class="hidebtn" type="button" data-target="maintBody">Hide</button></div>
+        <div id="maintBody" class="stack-sm">
+          <div id="maintBox"></div>
+          <p class="foot">Starts from a standard schedule; edit the items and intervals in Vehicles. Until you log a service, the app assumes it was done at the last regular interval. Tap “Mark done” after a service to restart that item's countdown.</p>
+        </div>
+      </section>
+
+      <section class="sec">
+        <div class="sechead"><h2>Lifetime MPG by vehicle</h2><button class="hidebtn" type="button" data-target="allVeh">Hide</button></div>
+        <div class="list" id="allVeh"></div>
+      </section>
+
+      <section class="sec">
+        <div class="sechead"><h2>Recent fill-ups</h2><button class="hidebtn" type="button" data-target="recentBody">Hide</button></div>
+        <div id="recentBody" class="stack-sm">
+          <div class="list" id="list"></div>
+          <p class="foot">“Mark fill-up(s) missed” tells the app you didn't log every fill-up before this one, so that stretch is left out of the MPG.</p>
+        </div>
+      </section>
+
+      <section class="sec">
+        <div class="sechead"><h2>Service history</h2><button class="hidebtn" type="button" data-target="svcList">Hide</button></div>
+        <div class="list" id="svcList"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ================= VEHICLES ================= -->
+  <section class="screen" id="screen-vehicles" aria-labelledby="vehTitle" hidden>
+    <header>
+      <h1 id="vehTitle">My vehicles</h1>
+      <p class="sub" id="vehSub">Add, rename or retire vehicles, and set each one's maintenance schedule.</p>
+    </header>
+
+    <div class="welcome" id="welcome" hidden>
+      <p class="lede">Track fill-ups, MPG and maintenance. There's no account: everything is saved on this device only.</p>
+      <div class="nudge" id="iosWelcome" hidden>
+        <p><strong>On iPhone, add this app to your Home Screen first</strong>, then open it from there. Data you enter in a Safari tab stays in Safari, and Safari can clear it if you don't visit often.</p>
+        <div class="nudge-acts"><a class="mbtn" href="#backup" data-open="install-ios">Show me how</a></div>
+      </div>
+    </div>
+
+    <div class="card wizard" id="wizard" hidden></div>
+
+    <button class="save" id="addVehicleBtn" type="button" hidden>Add a vehicle</button>
+    <div class="status" id="vStatus" role="status" aria-live="polite"></div>
+
+    <div class="list" id="vehList" hidden></div>
+
+    <p class="foot import-hint" id="importHint" hidden>Moving from another phone or computer? <a href="#backup">Import a backup</a> instead.</p>
+
+    <section class="card" aria-labelledby="shopsTitle" id="shopsCard">
+      <h2 id="shopsTitle">Shops</h2>
+      <p class="hint">Where your maintenance gets done. Pick one when you log maintenance.</p>
+      <ul class="shops" id="shopList"></ul>
+      <form class="addrow" id="shopAdd">
+        <input id="shopNew" type="text" autocomplete="off" placeholder="e.g. DIY, Main St. Auto" aria-label="New shop name">
+        <button class="go" type="submit">Add</button>
+      </form>
+      <div class="status" id="shopStatus" role="status"></div>
+    </section>
+  </section>
+
+  <!-- ================= BACKUP ================= -->
+  <section class="screen" id="screen-backup" aria-labelledby="bakTitle" hidden>
+    <header>
+      <h1 id="bakTitle">Backup</h1>
+      <p class="sub">Your data is saved only in this browser, on this device. Export a backup now and then and keep it somewhere safe.</p>
+    </header>
+
+    <section class="card" aria-labelledby="expTitle">
+      <h2 id="expTitle">Export</h2>
+      <p class="lastexp" id="lastExp"></p>
+      <div class="alert soft" id="expReminder" hidden></div>
+      <p class="hint" id="expCounts"></p>
+      <button class="save" id="exportBtn" type="button">Export CSV</button>
+      <p class="hint" id="expHow"></p>
+      <div class="status" id="expStatus" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card" aria-labelledby="impTitle">
+      <h2 id="impTitle">Import</h2>
+      <p class="hint">Moving to another phone or computer? Export on the old device, send the file to the new one, then import it here. You'll see a preview before anything is saved.</p>
+      <label class="filebtn">
+        <span>Choose CSV file</span>
+        <input id="importFile" type="file" accept=".csv,text/csv,text/comma-separated-values,application/vnd.ms-excel,text/plain">
+      </label>
+      <div id="impPreview" class="stack-sm" hidden></div>
+      <div class="status" id="impStatus" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card" aria-labelledby="stoTitle">
+      <h2 id="stoTitle">Storage on this device</h2>
+      <p id="storageText" class="hint"></p>
+    </section>
+
+    <section class="card" aria-labelledby="instTitle" id="installCard">
+      <h2 id="instTitle">Install as an app</h2>
+      <p class="hint" id="installLead">Installing gives it its own icon, opens it full screen and lets it work offline.</p>
+      <button class="save" id="installBtn" type="button" hidden>Install app</button>
+      <details class="how" id="install-ios">
+        <summary>iPhone and iPad</summary>
+        <ol>
+          <li>Open this page in <strong>Safari</strong>.</li>
+          <li>Tap <strong>Share</strong> (the square with an arrow). On iOS 26, tap <strong>•••</strong> first, then <strong>Share</strong>.</li>
+          <li>Scroll down and tap <strong>Add to Home Screen</strong>. Leave <strong>Open as Web App</strong> on, then tap <strong>Add</strong>.</li>
+          <li>From now on, open it from the Home Screen icon. That copy keeps its own data, separate from Safari tabs, and Safari can clear data for websites you don't open often.</li>
+        </ol>
+      </details>
+      <details class="how" id="install-android">
+        <summary>Android</summary>
+        <ol>
+          <li>Open this page in <strong>Chrome</strong>.</li>
+          <li>Tap the <strong>⋮</strong> menu, then <strong>Add to Home screen</strong> and choose <strong>Install</strong>.</li>
+          <li>Open it from the new icon.</li>
+        </ol>
+      </details>
+      <details class="how" id="install-windows">
+        <summary>Windows</summary>
+        <ol>
+          <li>Open this page in <strong>Edge</strong> or <strong>Chrome</strong>.</li>
+          <li>Click the <strong>install icon</strong> at the right end of the address bar. If it isn't there: Edge <strong>⋯</strong> menu → <strong>Apps</strong> → <strong>Install this site as an app</strong>; Chrome <strong>⋮</strong> menu → <strong>Cast, save and share</strong> → <strong>Install page as app</strong>.</li>
+          <li>It appears in the Start menu and can be pinned to the taskbar.</li>
+        </ol>
+      </details>
+      <details class="how" id="install-mac">
+        <summary>Mac</summary>
+        <ol>
+          <li>In <strong>Safari</strong> (macOS Sonoma or later): <strong>File</strong> → <strong>Add to Dock</strong>. Use the Dock app from then on; it keeps its own data, separate from Safari.</li>
+          <li>Or in <strong>Chrome</strong>: click the install icon at the right end of the address bar.</li>
+        </ol>
+      </details>
+    </section>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Sections">
+  <div class="tabbar-in">
+    <a href="#log" data-screen="log">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16"/><path d="M3 21h13"/><path d="M7 7h5v3.5H7z"/><path d="M15 10h1.5a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 0 3 0V9l-3-3.5"/></svg>
+      <span>Log</span>
+    </a>
+    <a href="#vehicles" data-screen="vehicles">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2.2-5.2A2 2 0 0 1 7 6.5h10a2 2 0 0 1 1.8 1.3L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1.5"/><circle cx="7" cy="18.5" r="1.6"/><circle cx="17" cy="18.5" r="1.6"/></svg>
+      <span>Vehicles</span>
+    </a>
+    <a href="#backup" data-screen="backup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+      <span>Backup</span><i class="dot" id="backupDot" hidden></i>
+    </a>
+  </div>
+</nav>
+
+<!-- Maintenance due -->
+<dialog class="mdlg" id="mDialog" aria-labelledby="mDlgTitle">
+  <div class="mdlg-in">
+    <div class="mdlg-head">
+      <h3 id="mDlgTitle">Maintenance coming up</h3>
+      <button class="xbtn" id="mClose" type="button" aria-label="Close">×</button>
+    </div>
+    <p class="sub">Going by each vehicle's latest logged odometer.</p>
+    <div id="mDlgBody" class="stack-sm"></div>
+    <button class="save" id="mOk" type="button">Got it</button>
+  </div>
+</dialog>
+
+<!-- Edit vehicle -->
+<dialog class="mdlg" id="vDialog" aria-labelledby="vDlgTitle">
+  <form class="mdlg-in" id="vForm" novalidate>
+    <div class="mdlg-head">
+      <h3 id="vDlgTitle">Edit vehicle</h3>
+      <button class="xbtn" id="vClose" type="button" aria-label="Close">×</button>
+    </div>
+    <label for="vName">Name<input id="vName" type="text" autocomplete="off" maxlength="80"></label>
+    <label class="chk" for="vInactive"><input type="checkbox" id="vInactive"> Inactive (hide from the vehicle lists; its records are kept)</label>
+    <label for="vOdo">Starting odometer<input id="vOdo" type="number" inputmode="numeric" min="0" step="1" placeholder="Optional"></label>
+    <p class="hint">Used for maintenance reminders until the first fill-up is logged.</p>
+    <div class="stack-sm">
+      <h4 class="h4">Maintenance schedule</h4>
+      <div id="vSched"></div>
+    </div>
+    <div class="status" id="vDlgStatus" role="status"></div>
+    <button class="save" type="submit">Save changes</button>
+    <button class="link" type="button" id="vCancel">Cancel</button>
+    <hr class="sep">
+    <button class="danger-link" type="button" id="vDelete">Delete vehicle</button>
+  </form>
+</dialog>
+
+<!-- Confirm / ask -->
+<dialog class="mdlg small" id="cDialog" aria-labelledby="cTitle">
+  <form class="mdlg-in" method="dialog" id="cForm">
+    <h3 id="cTitle"></h3>
+    <p id="cBody"></p>
+    <label id="cInputWrap" hidden><span id="cInputLabel"></span><input id="cInput" type="text" autocomplete="off"></label>
+    <div class="status" id="cStatus" role="status"></div>
+    <div class="dlg-btns">
+      <button class="btn2" value="cancel" id="cCancel" type="submit" formnovalidate>Cancel</button>
+      <button class="save" value="ok" id="cOk" type="submit">OK</button>
+    </div>
+  </form>
+</dialog>
+
+</body>
+</html>
