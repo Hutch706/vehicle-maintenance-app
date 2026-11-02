@@ -6,7 +6,7 @@ Log fill-ups, track MPG, and keep up with maintenance. It's an installable web a
 
 | File | What it is |
 |---|---|
-| `index.html` | The page: all three screens (Log, Vehicles, Backup) and the dialogs |
+| `index.html` | The page: all three screens (Log, Vehicles, Settings) and the dialogs |
 | `app.css` | Styles. Colors are at the top, with dark mode values right below |
 | `app.js` | The screens: forms, lists, the add-a-vehicle walkthrough, export and import buttons |
 | `data.js` | Storage (IndexedDB), MPG and maintenance math, the standard schedule, CSV export and import |
@@ -54,6 +54,10 @@ Opening `index.html` by double-clicking won't run the offline parts. Instead, in
 - **Missed fill-up detection**: `GAP_RATIO` in `data.js`. A stretch whose MPG is 1.6 times the vehicle's usual MPG is treated as fill-ups that weren't logged and left out.
 - **Backup reminder**: `backupDue()` in `app.js` (currently after 30 days with new records, or once there are 5 records and no backup yet).
 - **Colors and fonts**: the top of `app.css`.
+
+## Colors, Light/Dark and palettes
+
+The Settings screen has an **Options** section: Light / Dark / System, and a Color picker (Blue, Green, Red, Orange, Purple, Teal, Monochrome). The choices are saved on the device (`vma:theme`, `vma:palette`) and applied as `data-theme` and `data-palette` on `<html>`. Blue is the default at the top of `app.css`; the other palettes are in the "Color palettes" section below it. To add one, copy a palette block in `app.css` and add its name to `PALETTES` in `app.js`.
 
 ## The backup file (CSV)
 

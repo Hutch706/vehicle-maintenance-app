@@ -16,6 +16,14 @@
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>
+  // Apply the saved Light/Dark choice and color palette before the page draws, so it doesn't flash.
+  try {
+    var t = localStorage.getItem("vma:theme"), p = localStorage.getItem("vma:palette");
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    if (p && p !== "blue") document.documentElement.dataset.palette = p;
+  } catch (e) {}
+</script>
 <link rel="stylesheet" href="app.css">
 <script src="data.js" defer></script>
 <script src="app.js" defer></script>
@@ -35,7 +43,7 @@
 
     <div class="nudge" id="iosNudge" hidden>
       <p><strong>Add this app to your Home Screen.</strong> Safari can clear data for websites you don't open often. Apps on the Home Screen keep theirs.</p>
-      <div class="nudge-acts"><a class="mbtn" href="#backup" data-open="install-ios">Show me how</a><button class="mbtn quiet" type="button" id="iosNudgeLater">Not now</button></div>
+      <div class="nudge-acts"><a class="mbtn" href="#settings" data-open="install-ios">Show me how</a><button class="mbtn quiet" type="button" id="iosNudgeLater">Not now</button></div>
     </div>
 
     <div class="nudge" id="backupNudge" hidden>
@@ -179,7 +187,7 @@
       <p class="lede">Track fill-ups, MPG and maintenance. There's no account: everything is saved on this device only.</p>
       <div class="nudge" id="iosWelcome" hidden>
         <p><strong>On iPhone, add this app to your Home Screen first</strong>, then open it from there. Data you enter in a Safari tab stays in Safari, and Safari can clear it if you don't visit often.</p>
-        <div class="nudge-acts"><a class="mbtn" href="#backup" data-open="install-ios">Show me how</a></div>
+        <div class="nudge-acts"><a class="mbtn" href="#settings" data-open="install-ios">Show me how</a></div>
       </div>
     </div>
 
@@ -190,7 +198,7 @@
 
     <div class="list" id="vehList" hidden></div>
 
-    <p class="foot import-hint" id="importHint" hidden>Moving from another phone or computer? <a href="#backup">Import a backup</a> instead.</p>
+    <p class="foot import-hint" id="importHint" hidden>Moving from another phone or computer? <a href="#settings">Import a backup</a> instead.</p>
 
     <section class="card" aria-labelledby="shopsTitle" id="shopsCard">
       <h2 id="shopsTitle">Shops</h2>
@@ -204,12 +212,27 @@
     </section>
   </section>
 
-  <!-- ================= BACKUP ================= -->
-  <section class="screen" id="screen-backup" aria-labelledby="bakTitle" hidden>
+  <!-- ================= SETTINGS ================= -->
+  <section class="screen" id="screen-settings" aria-labelledby="setTitle" hidden>
     <header>
-      <h1 id="bakTitle">Backup</h1>
+      <h1 id="setTitle">Settings</h1>
       <p class="sub">Your data is saved only in this browser, on this device. Export a backup now and then and keep it somewhere safe.</p>
     </header>
+
+    <section class="card" aria-labelledby="optTitle">
+      <h2 id="optTitle">Options</h2>
+      <div class="sec">
+        <span class="optlabel" id="modeLabel">Appearance</span>
+        <div class="tabs three" role="group" aria-labelledby="modeLabel" id="modePick">
+          <button class="tab" type="button" data-mode="light" aria-pressed="false">Light</button>
+          <button class="tab" type="button" data-mode="dark" aria-pressed="false">Dark</button>
+          <button class="tab" type="button" data-mode="system" aria-pressed="true">System</button>
+        </div>
+      </div>
+      <label>Color
+        <select id="palettePick"></select>
+      </label>
+    </section>
 
     <section class="card" aria-labelledby="expTitle">
       <h2 id="expTitle">Export</h2>
@@ -287,9 +310,9 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2.2-5.2A2 2 0 0 1 7 6.5h10a2 2 0 0 1 1.8 1.3L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1.5"/><circle cx="7" cy="18.5" r="1.6"/><circle cx="17" cy="18.5" r="1.6"/></svg>
       <span>Vehicles</span>
     </a>
-    <a href="#backup" data-screen="backup">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
-      <span>Backup</span><i class="dot" id="backupDot" hidden></i>
+    <a href="#settings" data-screen="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Settings</span><i class="dot" id="backupDot" hidden></i>
     </a>
   </div>
 </nav>

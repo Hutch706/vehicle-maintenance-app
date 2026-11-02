@@ -98,10 +98,11 @@ function askDialog({ title, body = "", ok = "OK", cancel = "Cancel", danger = fa
 }
 
 // ---------- Screens ----------
-const SCREENS = ["log", "vehicles", "backup"];
+const SCREENS = ["log", "vehicles", "settings"];
 let curScreen = null, pendingOpen = null;
 function route() {
   let s = location.hash.replace(/^#/, "");
+  if (s === "backup") s = "settings"; // old links and bookmarks
   if (!SCREENS.includes(s)) s = S.vehicles.length ? "log" : "vehicles";
   for (const n of SCREENS) $("screen-" + n).hidden = n !== s;
   for (const a of document.querySelectorAll(".tabbar a")) {
@@ -856,7 +857,37 @@ $("shopAdd").addEventListener("submit", async (ev) => {
   } catch (e) { setMsg($("shopStatus"), saveErrorText(e), "err"); }
 });
 
-// ---------- Backup screen ----------
+// ---------- Settings: Light / Dark / System and color palette ----------
+// Saved on this device as vma:theme and vma:palette. The <head> script applies them before the page draws.
+const PALETTES = [
+  ["blue", "Blue"], ["green", "Green"], ["red", "Red"], ["orange", "Orange"],
+  ["purple", "Purple"], ["teal", "Teal"], ["mono", "Monochrome"],
+];
+function applyAppearance() {
+  const root = document.documentElement;
+  const mode = pref.get("theme", "system");
+  const pal = pref.get("palette", "blue");
+  if (mode === "light" || mode === "dark") root.dataset.theme = mode; else delete root.dataset.theme;
+  if (pal !== "blue" && PALETTES.some(([k]) => k === pal)) root.dataset.palette = pal; else delete root.dataset.palette;
+  for (const b of document.querySelectorAll("#modePick [data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
+  const sel = $("palettePick"); if (sel) sel.value = PALETTES.some(([k]) => k === pal) ? pal : "blue";
+  // Match the phone's status bar / browser toolbar to the page background.
+  const bg = getComputedStyle(root).getPropertyValue("--bg").trim();
+  for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.setAttribute("content", bg);
+}
+(function setupAppearance() {
+  const sel = $("palettePick");
+  for (const [k, n] of PALETTES) { const o = document.createElement("option"); o.value = k; o.textContent = n; sel.append(o); }
+  sel.addEventListener("change", () => { pref.set("palette", sel.value); applyAppearance(); });
+  $("modePick").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-mode]"); if (!b) return;
+    pref.set("theme", b.dataset.mode); applyAppearance();
+  });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyAppearance);
+  applyAppearance();
+})();
+
+// ---------- Settings screen: backup ----------
 function renderBackup() {
   if (S.lastExport) {
     const d = isoDate(new Date(S.lastExport));
